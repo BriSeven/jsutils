@@ -1,0 +1,180 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+	<title>URI Parser</title>
+	<style type="text/css" media="screen">
+	   #parseduri { 
+	      background: #AAA;
+	      padding:10px;
+	      margin:10px;
+	   }
+	   #testresults {
+	       background: #CCC;
+	       padding:10px;
+	       margin:10px;
+	   }
+	   body {
+	       font-family:sans-serif;
+	   }
+	</style>
+</head>
+<body>
+
+<label for="baseuri">Base URI</label><input type="text" name="baseuri" value="http://example.com" id="baseuri">    
+<label for="uri">URI</label><input type="text" name="uri" value="index.html" id="uri">
+<div id="parseduri"></div>
+
+
+<script type="text/javascript" charset="utf-8" src = "ngv.URI.js"></script>
+<script type="text/javascript" charset="utf-8" src = "jsunity-0-1.6.js"></script>
+<script type="text/javascript" charset="utf-8">
+/*<![CDATA[*/
+
+    
+    
+    
+baseuri = "http://a/b/c/d;p?q"
+function resolve (baseuri, uri) {
+    return ngv.URI(uri).withBaseURI(baseuri).toString();
+}
+
+    
+var rubyDerivedCases = {
+    suiteName:"RubyDerived",
+    testEdgeCaseResolve: function () {
+        jsUnity.assertions.assertEqual(resolve(baseuri,  "//example.com/"),"http://example.com/");
+    }
+    
+}
+
+var testRFCExamples = {
+    suiteName: "testRFCExamples",
+    testRFCNormal: function () {
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g:h"),"g:h");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g"),"http://a/b/c/g");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "./g"),"http://a/b/c/g");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g/"),"http://a/b/c/g/");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "/g"),"http://a/g");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "//g"),"http://g");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "?y"),"http://a/b/c/d;p?y");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g?y"),"http://a/b/c/g?y");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "#s"),"http://a/b/c/d;p?q#s");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g#s"),"http://a/b/c/g#s");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g?y#s"),"http://a/b/c/g?y#s");
+              jsUnity.assertions.assertEqual(resolve(baseuri, ";x"),"http://a/b/c/;x");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g;x"),"http://a/b/c/g;x");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g;x?y#s"),"http://a/b/c/g;x?y#s");
+              jsUnity.assertions.assertEqual(resolve(baseuri, ""),"http://a/b/c/d;p?q");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "."),"http://a/b/c/");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "./"),"http://a/b/c/");
+              jsUnity.assertions.assertEqual(resolve(baseuri, ".."),"http://a/b/");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "../"),"http://a/b/");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "../g"),"http://a/b/g");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "../.."),"http://a/");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "../../"),"http://a/");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "../../g"),"http://a/g");
+        
+    },
+    testRFCAbnormal: function () {
+        /*
+        Although the following abnormal examples are unlikely to occur in
+        normal practice, all URI parsers should be capable of resolving them
+        consistently.  Each example uses the same base as that above.
+
+        Parsers must be careful in handling cases where there are more ".."
+        segments in a relative-path reference than there are hierarchical
+        levels in the base URI's path.  Note that the ".." syntax cannot be
+        used to change the authority component of a URI.
+        */
+        
+              jsUnity.assertions.assertEqual(resolve(baseuri, "../../../g"),"http://a/g");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "../../../../g"),"http://a/g");
+
+
+           // Similarly, parsers must remove the dot-segments "." and ".." when
+           // they are complete components of a path, but not when they are only
+           // part of a segment.
+
+              jsUnity.assertions.assertEqual(resolve(baseuri, "/./g"),"http://a/g");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "/../g"),"http://a/g");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g."),"http://a/b/c/g.");
+              jsUnity.assertions.assertEqual(resolve(baseuri, ".g"),"http://a/b/c/.g");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g.."),"http://a/b/c/g..");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "..g"),"http://a/b/c/..g");
+
+           // Less likely are cases where the relative reference uses unnecessary
+           // or nonsensical forms of the "." and ".." complete path segments.
+
+              jsUnity.assertions.assertEqual(resolve(baseuri, "./../g"),"http://a/b/g");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "./g/."),"http://a/b/c/g/");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g/./h"),"http://a/b/c/g/h");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g/../h"),"http://a/b/c/h");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g;x=1/./y"),"http://a/b/c/g;x=1/y");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g;x=1/../y"),"http://a/b/c/y");
+
+           // Some applications fail to separate the reference's query and/or
+           // fragment components from the path component before merging it with
+           // the base path and removing dot-segments.  This error is rarely
+           // noticed, as typical usage of a fragment never includes the hierarchy
+           // ("/") character and the query component is not normally used within
+           // relative references.
+
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g?y/./x"),"http://a/b/c/g?y/./x");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g?y/../x"),"http://a/b/c/g?y/../x");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g#s/./x"),"http://a/b/c/g#s/./x");
+              jsUnity.assertions.assertEqual(resolve(baseuri, "g#s/../x"),"http://a/b/c/g#s/../x");
+
+           // Some parsers allow the scheme name to be present in a relative
+           // reference if it is the same as the base URI scheme.  This is
+           // considered to be a loophole in prior specifications of partial URI
+           // [RFC1630].  Its use should be avoided but is allowed for backward
+           // compatibility.
+
+              jsUnity.assertions.assertEqual(resolve(baseuri, "http:g"),"http:g");         // for strict parsers
+                              //  "http://a/b/c/g" // for backward compatibility
+        
+    }
+    
+}
+
+
+jsUnity.log = function (s) {
+    document.write("<div>" + s + "</div>");
+};
+
+    
+
+    var uriel = document.getElementById("uri");
+    var baseuriel = document.getElementById("baseuri");
+    
+    var parsedel = document.getElementById("parseduri");
+    
+    jsUnity.run(testRFCExamples,rubyDerivedCases);
+    
+    function parseAction(){
+            var result = ngv.URI(uriel.value).withBaseURI(baseuriel.value);
+            parsedel.textContent = [
+                "scheme", result.scheme, 
+                "authority", result.authority, 
+                "path", result.path, 
+                "query", result.query, 
+                "fragment", result.fragment
+            ].join(" | ")+" : "+(result||{}).toString();
+    }
+    
+    baseuriel.onkeyup = uriel.onkeyup = parseAction;
+    
+    parseAction();
+    
+    
+    
+    
+    
+/*]]>*/
+</script>
+</body>
+</html>
