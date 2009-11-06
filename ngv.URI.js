@@ -127,19 +127,83 @@ global.ngv=global.ngv || {};
         toString:function(){
             return [
                 (this.scheme!=null ? this.scheme+":":""),
-                (this.authority!=null ? "//"+this.authority:""),
+                (this.authority!=null ? "//"+this.parseAuthority().toString():""),
                 (this.parsePath().join("") || ""),
                 (this.query != null ? "?" + this.query : ""),
                 (this.fragment != null ? "#" + this.fragment : "")
             ].join("");
         },
+        normalize: function () {
+            var auth = this.parseAuthority();
+            
+            
+            auth.host = auth.host.toLowerCase();
+            this.authority = auth.toString();
+     
+            
+            
+            function redundantPathSep(o,i,a){
+                return o ==="/" && a[i-1]==="/"?false:true;
+            }
+            switch (this.scheme) {
+
+                case "http":
+                
+                    if(!this.path){
+                        this.path="/";
+                    }
+                    if(auth.port==="80"){
+                        auth.port="";
+                        this.authority=auth.toString();
+                    }
+                    var pathseg= this.parsePath();
+                    this.path = pathseg.filter(redundantPathSep).join("");
+                    return this;
+                    break;
+                case "file":
+                    var pathseg= this.parsePath();
+                    this.path = pathseg.filter(redundantPathSep).join("");
+                    this.authority = this.authority || "";
+                    return this;
+                    break;
+                default: 
+                    return this;
+                    break;
+            }
+        },
+        parseAuthority : function (authority) {
+            
+          authority = authority || this.authority || "";
+          var firstpass = (/(([^@]*)@)?([^:]*)(:(.*))?/).exec(authority) || [];
+          var userinfo=(firstpass[2]||"").split(":");
+          return {
+              userinfo:userinfo,
+              host:firstpass[3],
+              port:firstpass[5],
+              toString:function(){
+                  var ui = this.userinfo[0]; //discard everything past the first colon
+                  return encodeURI(decodeURI([
+                    (ui!=""?ui+"@":""), 
+                    (this.host||""),
+                    (!!this.port?":"+this.port:"")
+                  ].join(""))); 
+              }
+          };
+            
+        },
         parsePath : function (path){
                 path=path||this.path||"";
 
                 var pathseg=path.split(/(\/)/);
+                
+
+                
                 pathseg = pathseg.filter(function(o,i,a){
                     return !!o;
-                });
+                }).map(function(o){
+                    return o==="/"?o:encodeURI(decodeURI(o));
+                })
+
                 pathseg=removeDotSegments(pathseg);
 
                 return pathseg;
