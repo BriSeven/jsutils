@@ -1,4 +1,6 @@
 /*
+ngv.URI version 0.5
+
 Copyright (c) 2009, National Gallery of Victoria
 All rights reserved.
 
