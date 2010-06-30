@@ -35,17 +35,17 @@ Simple URI parser. There's just enough of the RFC spec implemented here
 for relative URI resolution. That is done as follows:
 
 ngv.URI("./relativereference")
-.withBaseUri("http://baseuri.example")
+.withBaseURI("http://baseuri.example")
 .toString();
 
 
 */
 
 
-var global = (function(){ return this })();
+var global = (function(){ return this; })();
 global.ngv=global.ngv || {};
 
-
+/*global ngv*/
 
 
 (function () {
@@ -77,9 +77,9 @@ global.ngv=global.ngv || {};
                 }
                 input.shift();
                 input.shift();
-                if (input.length == 0) {
+                if (input.length === 0) {
                     input = ["/"];
-                };
+                }
             } else if (input.length == 1 && (input[0] == "." || input[0] == "..")) {
                 input = [];
             } else {
@@ -108,7 +108,7 @@ global.ngv=global.ngv || {};
     
     
     ngv.URI=function (obj){
-
+        var i;
         if(this===global || this===ngv){
             return new ngv.URI(obj);
         }
@@ -137,7 +137,7 @@ global.ngv=global.ngv || {};
         },
         normalize: function () {
             var auth = this.parseAuthority();
-            
+            var pathseg;
             
             auth.host = auth.host.toLowerCase();
             this.authority = auth.toString();
@@ -158,19 +158,16 @@ global.ngv=global.ngv || {};
                         auth.port="";
                         this.authority=auth.toString();
                     }
-                    var pathseg= this.parsePath();
+                    pathseg= this.parsePath();
                     this.path = pathseg.filter(redundantPathSep).join("");
                     return this;
-                    break;
                 case "file":
-                    var pathseg= this.parsePath();
+                    pathseg= this.parsePath();
                     this.path = pathseg.filter(redundantPathSep).join("");
                     this.authority = this.authority || "";
                     return this;
-                    break;
                 default: 
                     return this;
-                    break;
             }
         },
         parseAuthority : function (authority) {
@@ -185,7 +182,7 @@ global.ngv=global.ngv || {};
               toString:function(){
                   var ui = this.userinfo[0]; //discard everything past the first colon
                   return encodeURI(decodeURI([
-                    (ui!=""?ui+"@":""), 
+                    (ui!==""?ui+"@":""), 
                     (this.host||""),
                     (!!this.port?":"+this.port:"")
                   ].join(""))); 
@@ -204,7 +201,7 @@ global.ngv=global.ngv || {};
                     return !!o;
                 }).map(function(o){
                     return o==="/"?o:encodeURI(decodeURI(o));
-                })
+                });
 
                 pathseg=removeDotSegments(pathseg);
 
@@ -227,12 +224,12 @@ global.ngv=global.ngv || {};
                     T.path = R.parsePath().join("");  //remove dot segments
                     T.query = R.query;
                 } else {
-                    if (R.path == "") {
+                    if (R.path === "") {
                         T.path = base.parsePath().join("");  //remove dot segments
                         if(R.query!=null){
-                            T.query = R.query
+                            T.query = R.query;
                         } else {
-                            T.query = base.query
+                            T.query = base.query;
                         }
                     } else  {
                         if(R.path.charAt(0) == "/"){

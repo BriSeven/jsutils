@@ -30,7 +30,7 @@
 
 
 <script type="text/javascript" charset="utf-8" src = "ngv.URI.js"></script>
-<script type="text/javascript" charset="utf-8" src = "jsunity-0-1.6.js"></script>
+<script type="text/javascript" charset="utf-8" src = "jsunity-0.6.js"></script>
 <script type="text/javascript" charset="utf-8">
 /*<![CDATA[*/
 
@@ -44,14 +44,198 @@ function resolve (baseuri, uri) {
 function normalize(uri) {
     return ngv.URI(uri).normalize().toString();
 }
-    
+function parse (uri) {
+    return ngv.URI(uri).normalize();
+}
+
+function getHash(uri) {
+    return uri;
+}
 var rubyDerivedCases = {
-    suiteName:"RubyDerived",
-    testEdgeCaseResolve: function () {
-        var a = jsUnity.assertions;
-        a.assertEqual(resolve(baseuri,  "//example.com/"),"http://example.com/");
-    }
+    //the ruby gem Addressable has a test suite
+    //The "rubyDerivedCases" are tests adapted from that suite
+    //The license for Addressable is reproduced below:
+    /* 
+    --
+     Addressable, Copyright (c) 2006-2007 Bob Aman
     
+     Permission is hereby granted, free of charge, to any person obtaining
+     a copy of this software and associated documentation files (the
+     "Software"), to deal in the Software without restriction, including
+     without limitation the rights to use, copy, modify, merge, publish,
+     distribute, sublicense, and/or sell copies of the Software, and to
+     permit persons to whom the Software is furnished to do so, subject to
+     the following conditions:
+    
+     The above copyright notice and this permission notice shall be
+     included in all copies or substantial portions of the Software.
+    
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+     OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+     WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    ++
+    */
+    
+    suiteName: "RubyDerived",
+    testEdgeCaseResolve: function() {
+        var a = jsUnity.assertions;
+        a.assertEqual(resolve(baseuri, "//example.com/"), "http://example.com/");
+    },
+    testEquivalence: function() {
+        var a = jsUnity.assertions;
+        /*
+            describe Addressable::URI, "when parsed from " +
+                "'http://example.com/'" do
+              before do
+                @uri = Addressable::URI.parse("http://example.com/")
+              end
+            */
+        var uri = normalize("http://example.com/");
+        
+        /*
+              # Based on http://intertwingly.net/blog/2004/07/31/URI-Equivalence
+              it "should be equivalent to http://example.com" do
+                @uri.should == Addressable::URI.parse("http://example.com")
+              end
+            */
+        a.assertEqual(uri, normalize("http://example.com"));
+        /*
+              # Based on http://intertwingly.net/blog/2004/07/31/URI-Equivalence
+              it "should be equivalent to HTTP://example.com/" do
+                @uri.should == Addressable::URI.parse("HTTP://example.com/")
+              end
+        */
+        
+        a.assertEqual(uri, normalize("HTTP://example.com/"));
+        
+        /*
+              # Based on http://intertwingly.net/blog/2004/07/31/URI-Equivalence
+              it "should be equivalent to http://example.com:/" do
+                @uri.should == Addressable::URI.parse("http://example.com:/")
+              end
+       */
+        a.assertEqual(uri, normalize("http://example.com:/"));
+      
+       /*
+              # Based on http://intertwingly.net/blog/2004/07/31/URI-Equivalence
+              it "should be equivalent to http://example.com:80/" do
+                @uri.should == Addressable::URI.parse("http://example.com:80/")
+              end
+        */
+        a.assertEqual(uri, normalize("http://example.com:80/"));
+        
+        /*
+              # Based on http://intertwingly.net/blog/2004/07/31/URI-Equivalence
+              it "should be equivalent to http://Example.com/" do
+                @uri.should == Addressable::URI.parse("http://Example.com/")
+              end
+        */
+        
+            a.assertEqual(uri, normalize("http://Example.com/"));
+            
+        /*
+              it "should have the correct username after assignment" do
+                @uri.user = nil
+                @uri.user.should == nil
+                @uri.password.should == nil
+                @uri.to_s.should == "http://example.com/"
+              end
+        */
+        
+        var uri = parse("http://example.com/");
+        
+        uri.user=undefined;
+        a.assertEqual(uri.user,undefined);
+        a.assertEqual(uri.password,undefined);
+        a.assertEqual(uri.toString(), "http://example.com/");
+        
+        
+        /*
+              it "should have the correct password after assignment" do
+                @uri.password = nil
+                @uri.password.should == nil
+                @uri.user.should == nil
+                @uri.to_s.should == "http://example.com/"
+              end
+       */
+       
+       uri.password=undefined;
+       a.assertEqual(uri.user,undefined);
+       a.assertEqual(uri.password,undefined);
+       a.assertEqual(uri.toString(), "http://example.com/");
+       
+       /*
+        more from http://intertwingly.net/blog/2004/07/31/URI-Equivalence
+       */
+       
+       var uri = normalize("http://example.com/~smith/");
+       a.assertEqual(uri, normalize("http://example.com/%7Esmith/"));
+       a.assertEqual(uri, normalize("http://example.com/%7esmith/"));
+       a.assertEqual(
+           normalize("http://example.com/%7Esmith/"),      
+           normalize("http://example.com/%7esmith/")
+       );
+       a.assertEqual(normalize("http://example.com/%C3%87"), normalize("http://example.com/C%CC%A7"));
+       
+      
+    },
+    testPercentEncodedIRI: function () {
+        var a = jsUnity.assertions;
+        
+        /*
+        this test fails intentionally. (it's not required functionality at this time)
+        
+        However, if someone wants to make it pass, the bulk of the required code can be found, (public domain) here:
+        http://stackoverflow.com/questions/183485/can-anyone-recommend-a-good-free-javascript-for-punycode-to-unicode-conversion
+        
+        
+        the rest is is specified in section 4.1 of IETF rfc3490, rfc3491, and rfc 3492
+        
+        
+        */
+/*
+describe Addressable::URI, "when parsed from a percent-encoded IRI" do
+  before do
+    @uri = Addressable::URI.parse(
+      "http://www.%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA" +
+      "%E3%81%8C%E3%81%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3" +
+      "%82%89%E3%81%AA%E3%81%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82" +
+      "%81%E3%81%84%E3%81%AE%E3%82%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0" +
+      "%E3%81%AA%E3%81%8C%E3%81%8F%E3%81%97%E3%81%AA%E3%81%84%E3%81%A8%E3" +
+      "%81%9F%E3%82%8A%E3%81%AA%E3%81%84.w3.mag.keio.ac.jp"
+    )
+  end
+
+  it "should normalize to something sane" do
+    @uri.normalize.to_s.should ==
+      "http://www.xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3f" +
+      "g11amb5gzdb4wi9bya3kc6lra.w3.mag.keio.ac.jp/"
+    @uri.normalize!.to_s.should ==
+      "http://www.xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3f" +
+      "g11amb5gzdb4wi9bya3kc6lra.w3.mag.keio.ac.jp/"
+  end
+end
+
+*/
+
+    var uri = normalize(
+      "http://www.%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA" +
+      "%E3%81%8C%E3%81%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3" +
+      "%82%89%E3%81%AA%E3%81%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82" +
+      "%81%E3%81%84%E3%81%AE%E3%82%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0" +
+      "%E3%81%AA%E3%81%8C%E3%81%8F%E3%81%97%E3%81%AA%E3%81%84%E3%81%A8%E3" +
+      "%81%9F%E3%82%8A%E3%81%AA%E3%81%84.w3.mag.keio.ac.jp"      
+    );
+    
+    a.assertEqual(uri, "http://www.xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3f" +
+      "g11amb5gzdb4wi9bya3kc6lra.w3.mag.keio.ac.jp/");
+    
+        
+    }
 }
 
 var apiCases = {
