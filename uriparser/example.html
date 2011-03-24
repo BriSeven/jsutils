@@ -1,0 +1,418 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+	<title>URI Parser</title>
+	<style type="text/css" media="screen">
+	   #parseduri { 
+	      background: #AAA;
+	      padding:10px;
+	      margin:10px;
+	   }
+	   #testresults {
+	       background: #CCC;
+	       padding:10px;
+	       margin:10px;
+	   }
+	   body {
+	       font-family:sans-serif;
+	   }
+	</style>
+</head>
+<body>
+
+<label for="baseuri">Base URI</label><input type="text" name="baseuri" value="http://example.com" id="baseuri">    
+<label for="uri">URI</label><input type="text" name="uri" value="index.html" id="uri">
+<div id="parseduri"></div>
+
+
+<script type="text/javascript" charset="utf-8" src = "ngv.URI.js"></script>
+<script type="text/javascript" charset="utf-8" src = "jsunity-0.6.js"></script>
+<script type="text/javascript" charset="utf-8">
+/*<![CDATA[*/
+
+    
+    
+    
+baseuri = "http://a/b/c/d;p?q"
+function resolve (baseuri, uri) {
+    return ngv.URI(uri).withBaseURI(baseuri).toString();
+}
+function normalize(uri) {
+    return ngv.URI(uri).normalize().toString();
+}
+function parse (uri) {
+    return ngv.URI(uri).normalize();
+}
+
+function getHash(uri) {
+    return uri;
+}
+var rubyDerivedCases = {
+    //the ruby gem Addressable has a test suite
+    //The "rubyDerivedCases" are tests adapted from that suite
+    //The license for Addressable is reproduced below:
+    /* 
+    --
+     Addressable, Copyright (c) 2006-2007 Bob Aman
+    
+     Permission is hereby granted, free of charge, to any person obtaining
+     a copy of this software and associated documentation files (the
+     "Software"), to deal in the Software without restriction, including
+     without limitation the rights to use, copy, modify, merge, publish,
+     distribute, sublicense, and/or sell copies of the Software, and to
+     permit persons to whom the Software is furnished to do so, subject to
+     the following conditions:
+    
+     The above copyright notice and this permission notice shall be
+     included in all copies or substantial portions of the Software.
+    
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+     LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+     OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+     WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    ++
+    */
+    
+    suiteName: "RubyDerived",
+    testEdgeCaseResolve: function() {
+        var a = jsUnity.assertions;
+        a.assertEqual(resolve(baseuri, "//example.com/"), "http://example.com/");
+    },
+    testEquivalence: function() {
+        var a = jsUnity.assertions;
+        /*
+            describe Addressable::URI, "when parsed from " +
+                "'http://example.com/'" do
+              before do
+                @uri = Addressable::URI.parse("http://example.com/")
+              end
+            */
+        var uri = normalize("http://example.com/");
+        
+        /*
+              # Based on http://intertwingly.net/blog/2004/07/31/URI-Equivalence
+              it "should be equivalent to http://example.com" do
+                @uri.should == Addressable::URI.parse("http://example.com")
+              end
+            */
+        a.assertEqual(uri, normalize("http://example.com"));
+        /*
+              # Based on http://intertwingly.net/blog/2004/07/31/URI-Equivalence
+              it "should be equivalent to HTTP://example.com/" do
+                @uri.should == Addressable::URI.parse("HTTP://example.com/")
+              end
+        */
+        
+        a.assertEqual(uri, normalize("HTTP://example.com/"));
+        
+        /*
+              # Based on http://intertwingly.net/blog/2004/07/31/URI-Equivalence
+              it "should be equivalent to http://example.com:/" do
+                @uri.should == Addressable::URI.parse("http://example.com:/")
+              end
+       */
+        a.assertEqual(uri, normalize("http://example.com:/"));
+      
+       /*
+              # Based on http://intertwingly.net/blog/2004/07/31/URI-Equivalence
+              it "should be equivalent to http://example.com:80/" do
+                @uri.should == Addressable::URI.parse("http://example.com:80/")
+              end
+        */
+        a.assertEqual(uri, normalize("http://example.com:80/"));
+        
+        /*
+              # Based on http://intertwingly.net/blog/2004/07/31/URI-Equivalence
+              it "should be equivalent to http://Example.com/" do
+                @uri.should == Addressable::URI.parse("http://Example.com/")
+              end
+        */
+        
+            a.assertEqual(uri, normalize("http://Example.com/"));
+            
+        /*
+              it "should have the correct username after assignment" do
+                @uri.user = nil
+                @uri.user.should == nil
+                @uri.password.should == nil
+                @uri.to_s.should == "http://example.com/"
+              end
+        */
+        
+        var uri = parse("http://example.com/");
+        
+        uri.user=undefined;
+        a.assertEqual(uri.user,undefined);
+        a.assertEqual(uri.password,undefined);
+        a.assertEqual(uri.toString(), "http://example.com/");
+        
+        
+        /*
+              it "should have the correct password after assignment" do
+                @uri.password = nil
+                @uri.password.should == nil
+                @uri.user.should == nil
+                @uri.to_s.should == "http://example.com/"
+              end
+       */
+       
+       uri.password=undefined;
+       a.assertEqual(uri.user,undefined);
+       a.assertEqual(uri.password,undefined);
+       a.assertEqual(uri.toString(), "http://example.com/");
+       
+       /*
+        more from http://intertwingly.net/blog/2004/07/31/URI-Equivalence
+       */
+       
+       var uri = normalize("http://example.com/~smith/");
+       a.assertEqual(uri, normalize("http://example.com/%7Esmith/"));
+       a.assertEqual(uri, normalize("http://example.com/%7esmith/"));
+       a.assertEqual(
+           normalize("http://example.com/%7Esmith/"),      
+           normalize("http://example.com/%7esmith/")
+       );
+       a.assertEqual(normalize("http://example.com/%C3%87"), normalize("http://example.com/C%CC%A7"));
+       
+      
+    },
+    testPercentEncodedIRI: function () {
+        var a = jsUnity.assertions;
+        
+        /*
+        this test fails intentionally. (it's not required functionality at this time)
+        
+        However, if someone wants to make it pass, the bulk of the required code can be found, (public domain) here:
+        http://stackoverflow.com/questions/183485/can-anyone-recommend-a-good-free-javascript-for-punycode-to-unicode-conversion
+        
+        
+        the rest is is specified in section 4.1 of IETF rfc3490, rfc3491, and rfc 3492
+        
+        
+        */
+/*
+describe Addressable::URI, "when parsed from a percent-encoded IRI" do
+  before do
+    @uri = Addressable::URI.parse(
+      "http://www.%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA" +
+      "%E3%81%8C%E3%81%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3" +
+      "%82%89%E3%81%AA%E3%81%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82" +
+      "%81%E3%81%84%E3%81%AE%E3%82%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0" +
+      "%E3%81%AA%E3%81%8C%E3%81%8F%E3%81%97%E3%81%AA%E3%81%84%E3%81%A8%E3" +
+      "%81%9F%E3%82%8A%E3%81%AA%E3%81%84.w3.mag.keio.ac.jp"
+    )
+  end
+
+  it "should normalize to something sane" do
+    @uri.normalize.to_s.should ==
+      "http://www.xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3f" +
+      "g11amb5gzdb4wi9bya3kc6lra.w3.mag.keio.ac.jp/"
+    @uri.normalize!.to_s.should ==
+      "http://www.xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3f" +
+      "g11amb5gzdb4wi9bya3kc6lra.w3.mag.keio.ac.jp/"
+  end
+end
+
+*/
+
+    var uri = normalize(
+      "http://www.%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA" +
+      "%E3%81%8C%E3%81%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3" +
+      "%82%89%E3%81%AA%E3%81%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82" +
+      "%81%E3%81%84%E3%81%AE%E3%82%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0" +
+      "%E3%81%AA%E3%81%8C%E3%81%8F%E3%81%97%E3%81%AA%E3%81%84%E3%81%A8%E3" +
+      "%81%9F%E3%82%8A%E3%81%AA%E3%81%84.w3.mag.keio.ac.jp"      
+    );
+    
+    a.assertEqual(uri, "http://www.xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3f" +
+      "g11amb5gzdb4wi9bya3kc6lra.w3.mag.keio.ac.jp/");
+    
+        
+    }
+}
+
+var apiCases = {
+    suiteName:"apiCases",
+    testBaseURIHasPrototype: function () {
+        var a = jsUnity.assertions;
+        a.assertEqual(ngv.URI("uri").withBaseURI(baseuri).withBaseURI,ngv.URI("uri").withBaseURI);
+    }
+}
+
+var normalization = {
+    suiteName:"Normalization",
+    testSyntaxBasedNormalization: function () {
+        var a = jsUnity.assertions;
+        a.assertEqual(normalize("example://a/b/c/%7Bfoo%7D"),normalize("eXAMPLE://a/./b/../b/%63/%7bfoo%7d"));
+        a.assertEqual("example://a/b/c/%7Bfoo%7D",normalize("eXAMPLE://a/./b/../b/%63/%7bfoo%7d")); 
+        //percent encoding in host
+       a.assertEqual("example://a/b/c/%7Bfoo%7D",normalize("eXAMPLE://%61/./b/../b/%63/%7bfoo%7d")); 
+       
+       // Section 6.2.2.1 of RFC 3986
+       a.assertEqual("http://example.com/",normalize("http://EXAMPLE.COM")); 
+
+        
+    },
+    testSchemeBasedNormalization: function () {
+        var a = jsUnity.assertions;
+        a.assertEqual(normalize("http://example.com"),"http://example.com/");
+        a.assertEqual(normalize("http://example.com"),normalize("http://example.com/"));
+        a.assertEqual(normalize("http://example.com"),normalize("http://example.com:/"));
+        a.assertEqual(normalize("http://example.com"),normalize("http://example.com:80/"));
+        //multple slashes
+        a.assertEqual(normalize("http://example.com////"),"http://example.com/");
+        a.assertEqual(normalize("file:///example////"),"file:///example/");
+        a.assertEqual(normalize("file:/example////"),"file:///example/");
+        //shouldn't put password in user info
+
+    },
+    testPasswordSafety: function () {
+        var a = jsUnity.assertions;
+        //RFC deprecates username:password@domain form, and allows user agents to discard everything after the first colon.
+        a.assertEqual(normalize("http://johndoe:12345@example.com/"),"http://johndoe@example.com/");
+        
+    }
+    
+}
+
+var testRFCExamples = {
+    suiteName: "testRFCExamples",
+    testRFCNormal: function () {
+        var a = jsUnity.assertions;
+              a.assertEqual(resolve(baseuri, "g:h"),"g:h");
+              a.assertEqual(resolve(baseuri, "g"),"http://a/b/c/g");
+              a.assertEqual(resolve(baseuri, "./g"),"http://a/b/c/g");
+              a.assertEqual(resolve(baseuri, "g/"),"http://a/b/c/g/");
+              a.assertEqual(resolve(baseuri, "/g"),"http://a/g");
+              a.assertEqual(resolve(baseuri, "//g"),"http://g");
+              a.assertEqual(resolve(baseuri, "?y"),"http://a/b/c/d;p?y");
+              a.assertEqual(resolve(baseuri, "g?y"),"http://a/b/c/g?y");
+              a.assertEqual(resolve(baseuri, "#s"),"http://a/b/c/d;p?q#s");
+              a.assertEqual(resolve(baseuri, "g#s"),"http://a/b/c/g#s");
+              a.assertEqual(resolve(baseuri, "g?y#s"),"http://a/b/c/g?y#s");
+              a.assertEqual(resolve(baseuri, ";x"),"http://a/b/c/;x");
+              a.assertEqual(resolve(baseuri, "g;x"),"http://a/b/c/g;x");
+              a.assertEqual(resolve(baseuri, "g;x?y#s"),"http://a/b/c/g;x?y#s");
+              a.assertEqual(resolve(baseuri, ""),"http://a/b/c/d;p?q");
+              a.assertEqual(resolve(baseuri, "."),"http://a/b/c/");
+              a.assertEqual(resolve(baseuri, "./"),"http://a/b/c/");
+              a.assertEqual(resolve(baseuri, ".."),"http://a/b/");
+              a.assertEqual(resolve(baseuri, "../"),"http://a/b/");
+              a.assertEqual(resolve(baseuri, "../g"),"http://a/b/g");
+              a.assertEqual(resolve(baseuri, "../.."),"http://a/");
+              a.assertEqual(resolve(baseuri, "../../"),"http://a/");
+              a.assertEqual(resolve(baseuri, "../../g"),"http://a/g");
+        
+    },
+    testRFCAbnormal: function () {
+        var a = jsUnity.assertions;
+        
+        /*
+        Although the following abnormal examples are unlikely to occur in
+        normal practice, all URI parsers should be capable of resolving them
+        consistently.  Each example uses the same base as that above.
+
+        Parsers must be careful in handling cases where there are more ".."
+        segments in a relative-path reference than there are hierarchical
+        levels in the base URI's path.  Note that the ".." syntax cannot be
+        used to change the authority component of a URI.
+        */
+        
+        a.assertEqual(resolve(baseuri, "../../../g"),"http://a/g");
+        a.assertEqual(resolve(baseuri, "../../../../g"),"http://a/g");
+
+
+        // Similarly, parsers must remove the dot-segments "." and ".." when
+        // they are complete components of a path, but not when they are only
+        // part of a segment.
+
+        a.assertEqual(resolve(baseuri, "/./g"),"http://a/g");
+        a.assertEqual(resolve(baseuri, "/../g"),"http://a/g");
+        a.assertEqual(resolve(baseuri, "g."),"http://a/b/c/g.");
+        a.assertEqual(resolve(baseuri, ".g"),"http://a/b/c/.g");
+        a.assertEqual(resolve(baseuri, "g.."),"http://a/b/c/g..");
+        a.assertEqual(resolve(baseuri, "..g"),"http://a/b/c/..g");
+
+        // Less likely are cases where the relative reference uses unnecessary
+        // or nonsensical forms of the "." and ".." complete path segments.
+
+        a.assertEqual(resolve(baseuri, "./../g"),"http://a/b/g");
+        a.assertEqual(resolve(baseuri, "./g/."),"http://a/b/c/g/");
+        a.assertEqual(resolve(baseuri, "g/./h"),"http://a/b/c/g/h");
+        a.assertEqual(resolve(baseuri, "g/../h"),"http://a/b/c/h");
+        a.assertEqual(resolve(baseuri, "g;x=1/./y"),"http://a/b/c/g;x=1/y");
+        a.assertEqual(resolve(baseuri, "g;x=1/../y"),"http://a/b/c/y");
+
+        // Some applications fail to separate the reference's query and/or
+        // fragment components from the path component before merging it with
+        // the base path and removing dot-segments.  This error is rarely
+        // noticed, as typical usage of a fragment never includes the hierarchy
+        // ("/") character and the query component is not normally used within
+        // relative references.
+
+        a.assertEqual(resolve(baseuri, "g?y/./x"),"http://a/b/c/g?y/./x");
+        a.assertEqual(resolve(baseuri, "g?y/../x"),"http://a/b/c/g?y/../x");
+        a.assertEqual(resolve(baseuri, "g#s/./x"),"http://a/b/c/g#s/./x");
+        a.assertEqual(resolve(baseuri, "g#s/../x"),"http://a/b/c/g#s/../x");
+
+        // Some parsers allow the scheme name to be present in a relative
+        // reference if it is the same as the base URI scheme.  This is
+        // considered to be a loophole in prior specifications of partial URI
+        // [RFC1630].  Its use should be avoided but is allowed for backward
+        // compatibility.
+
+        a.assertEqual(resolve(baseuri, "http:g"),"http:g"); // for strict parsers
+        //  "http://a/b/c/g" // for backward compatibility
+
+    }
+    
+}
+
+
+jsUnity.log = function (s) {
+    document.write("<div>" + s + "</div>");
+};
+
+    
+
+    var uriel = document.getElementById("uri");
+    var baseuriel = document.getElementById("baseuri");
+    
+    var parsedel = document.getElementById("parseduri");
+    
+    jsUnity.run(apiCases, testRFCExamples,rubyDerivedCases, normalization);
+    
+    function parseAction(){
+            var result = ngv.URI(uriel.value).withBaseURI(baseuriel.value);
+            var auth = result.parseAuthority();
+            parsedel.textContent = [
+                "scheme", result.scheme, 
+                "authority", result.authority, 
+                "path", result.path, 
+                "query", result.query, 
+                "fragment", result.fragment,
+                "userinfo", auth.userinfo,
+                "host", auth.host,
+                "port", auth.port
+            ].join(" | ")+" : "+(result||{}).toString();
+    }
+    
+    baseuriel.onkeyup = uriel.onkeyup = parseAction;
+    
+    parseAction();
+    
+    
+    
+    
+    
+/*]]>*/
+</script>
+</body>
+</html>
