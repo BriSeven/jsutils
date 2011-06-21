@@ -1,0 +1,19 @@
+body {
+    font-family:sans-serif;
+    background-color:#390;
+    color:white;
+    text-align:center;
+}
+
+ul.ngvslides {
+    list-style-type: none;
+    margin:0;
+    padding:0;
+    width:600px;
+    height:402px;
+    background-position:50% 50% no-repeat;
+}
+
+a {
+    color:white;
+}
