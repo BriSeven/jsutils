@@ -1,4 +1,5 @@
 //An animation back end for dom objects.
+//Convenient methods of creating dom elements and applying attributes to them in bulk.
 //
 /*
     sprites createElementsAt(descriptor, selector) {

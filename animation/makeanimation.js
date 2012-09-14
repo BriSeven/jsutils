@@ -23,9 +23,9 @@
 // in an animation all sprites are persistent through the whole animation and cannot be removed
 // or put back, but a "visible" property can be switched on and off.
 
-// this can be used in conjunction with domprop.js
+// this can be used in conjunction with makeDomPlayer.js
 // to animate dom objects.
-//. Since this library does not depend on any other libraries or apis, it can be used in many otehr ways as well.
+//. Since this library does not depend on any other libraries or apis, it can be used in many other ways as well.
 define([], function () {
     return function makeAnimation(base, a) {
         "use strict";
