@@ -1,5 +1,5 @@
-(function (ngv) {
-    /*a sawtooth wave which repeats every duration+transition along time, 
+define([],function(){
+ /*a sawtooth wave which repeats every duration+transition along time, 
     and whose teeth cross 0 at duration, and 1 at duration+transition*/
     function periodic(time, duration, transition) {
         var a=duration,b=transition,x=time;
@@ -29,8 +29,12 @@
        var sustain = 1;
        return  Math.max(x < c ? fadein : x > (c+a-b) ? fadeout : 1,0);
     }
-    ngv.periodic=periodic;
-    ngv.stepper=stepper;
-    ngv.crossfader=crossfader;
+    
+    return {
+        periodic:periodic,
+        stepper:stepper,
+        crossfader:crossfader
+    }
+});
+   
 
-})(this.ngv||this.exports||this);

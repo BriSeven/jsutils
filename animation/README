@@ -1,11 +1,16 @@
 Some animation utilities.
+(These utilities use requireJS. makedomplayer uses jquery and underscore)
 
-The ngv.Playhead class implements an object with an abstract playhead behavior as you might
+The Playhead class implements an object with an abstract playhead behavior as you might
 find behind some VCR like controls. It can also be used for things like stop watches.
 
 to use, start by making a new playhead object like so:
 
-var ph = new ngv.Playhead();
+require(['playhead'],function(playhead){
+	var ph = playhead();
+
+
+});
 
 A playhead object has 5 methods:
 
@@ -27,6 +32,38 @@ the playhead continues moving forward, if it is stopped, the playhead remains st
 ph.time();
 this method returns the current elapsed time, in milliseconds, that the playhead has from the start.
 The typical usage is to call this function intermittently using something like setInterval.
+
+
+makeAnimation takes base, and a,
+they are both objects with each key cooresponding to a sprite
+each sprite is an object with a list of properties. Base contains default properties
+while sprite contains properties which can optionally be an object in a particular format
+which specifies a keyframe animation.
+ for example:
+ {
+     "tween": "line",
+     "0500": 0,
+     "0750": -24
+ }
+
+the result of makeAnimation is an object with frame, diffFrame, and find methods.
+find takes spritename, propertyname, and time, and returns the next and previous values
+for that sprite's property at that time. 
+
+frame takes T time (in milliseconds), and returns an entire flattened version of the animation object,
+and evaluates the values of all the properties for the given time.
+
+diffFrame takes a value as returned from frame, and T, and gives you the differences
+between those two times. 
+
+in an animation all sprites are persistent through the whole animation and cannot be removed
+or put back, but a "visible" property can be switched on and off.
+
+this can be used in conjunction with makeDomPlayer.js
+to animate dom objects.
+ Since this library does not depend on any other libraries or apis, it can be used in many other ways as wel
+
+TODO: (re)build demos.
 
 
 
